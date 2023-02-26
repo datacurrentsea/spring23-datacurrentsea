@@ -40,7 +40,7 @@ async def not_implemented():
     raise HTTPException(status_code=501, detail="[501 Error] Not Implemented")
 
 @app.get("/hello")
-async def hello(name: str|None = None):
+async def hello(name: str | None = None):
     if name is not None and name != "" and name!=" ":
         return {"Hello":name}
     else:
@@ -50,10 +50,10 @@ async def hello(name: str|None = None):
 async def health():
     utc_time = datetime.now(timezone.utc)
     utc_var = datetime.isoformat(utc_time)
-    return {"UTC Time": utc_var}
+    return {"status": utc_var}
 
 
-@app.post("/predict/",response_model=HousePrice)
+@app.post("/predict",response_model=HousePrice)
 async def predict_price(housedata: HouseData):
     house_dict = housedata.dict()
     house_vals = list(house_dict.values())

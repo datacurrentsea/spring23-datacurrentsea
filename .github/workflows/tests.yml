@@ -1,4 +1,4 @@
-name: 'Pytest Verification on Pull Request' 
+name: 'Pytest Verification on Pull Request 2' 
 
 on:
   pull_request:

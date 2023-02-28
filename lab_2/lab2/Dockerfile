@@ -1,9 +1,13 @@
 # Dockerfile
 # Build venv
-FROM python:3.10-buster as venv
+#FROM python:3.10-buster as venv
+FROM python:3.10-slim as venv
 
 RUN apt-get update \
-    && apt-get install -y curl build-essential \
+    && apt-get install -y \
+        curl \
+        build-essential \
+        libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry

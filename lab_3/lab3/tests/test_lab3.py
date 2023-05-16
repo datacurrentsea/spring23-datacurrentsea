@@ -2,26 +2,11 @@ import pytest
 from fastapi.testclient import TestClient 
 from unittest import mock
 import httpx 
-
-# def mock_cache(*args, **kwargs):
-#     def wrapper(func):
-#         @wraps(func)
-#         async def inner(*args, **kwargs):
-#             return await func(*args, **kwargs)
-#         return inner
-#     return wrapper
-
-# mock.patch("fastapi_cache.decorator.cache", mock_cache).start()    
-
-# @pytest.fixture(scope="module")
-# async def client():
-#     from src.main import app # need to load app module after mock. otherwise, it would fail
-#     async with AsyncClient(app=app, base_url="http://localhost:8000") as client:
-#         yield client
 mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 from src.main import *
+
 client = TestClient(app)
-#client = client(app)
+
 def test_root():
     response = client.get("/")
     assert response.status_code == 501
@@ -64,11 +49,29 @@ def test_health():
 def test_predict_good():
     house_data = {"houses":[{"income": 1, "age": 20, "rooms": 3, "beds": 2,"pop":20,"occupants":4,"lat":32.11,"long":11.1},{"income": 1, "age": 30, "rooms": 2, "beds": 1,"pop":10,"occupants":2,"lat":1.1,"long":2.1}]}
     response = client.post("/predict",json=house_data)
-    #response = client.post("/predict",json=house_data)
+    raw_output = response.json()
+    output = raw_output["prices"]
     assert response.status_code == 200
+    assert isinstance(output,list)
+    for value in output:
+        assert isinstance(value,float)
 
-# def test_predict_bad():
-#     house_data = {"houses":[{"income": 1, "age": 20, "rooms": 3, "beds": 2,"pop":20,"occupants":"four","lat":32.11,"long":11.1},{"income": 1, "age": 30, "rooms": 2, "beds": 1,"pop":10,"occupants":2}]}
-#     response = client.post("/predict",json=house_data)
-#     assert response.status_code == 422  
-#     #assert response.text == '{"detail":[{"loc":["body","beds"],"msg":"field required","type":"value_error.missing"}]}' 
+def test_predict_bad_type():
+    house_data = {"houses":[{"income": 1, "age": 20, "rooms": 3, "beds": 2,"pop":20,"occupants":"four","lat":32.11,"long":11.1},{"income": 1, "age": 20, "rooms": 3, "beds": 2,"pop":"twenty20","occupants":"four","lat":32.11,"long":-10.1}]}
+    response = client.post("/predict",json=house_data)
+    assert response.status_code == 422  
+    raw_output = response.json()
+    output = raw_output["detail"]
+    for i in output:
+        assert i["msg"] == "value is not a valid float"
+        assert i["type"] == "type_error.float"
+
+def test_predict_missing_val():
+    house_data = {"houses":[{"income": 1, "age": 30, "rooms": 2, "beds": 1,"pop":10,"occupants":2},{"rooms": 2, "beds": 1,"pop":10,"occupants":2},{"income": 1}]}
+    response = client.post("/predict",json=house_data)
+    assert response.status_code == 422  
+    raw_output = response.json()
+    output = raw_output["detail"]
+    for i in output:
+        assert i["msg"] == "field required"
+        assert i["type"] == "value_error.missing"

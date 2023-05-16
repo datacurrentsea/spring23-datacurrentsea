@@ -17,6 +17,7 @@ ENV PATH /root/.local/bin:$PATH
 
 # Install Dependencies
 WORKDIR /app
+#COPY data.json /app/data.json
 COPY pyproject.toml poetry.lock ./
 RUN python -m venv --copies /app/venv
 RUN . /app/venv/bin/activate && poetry install
